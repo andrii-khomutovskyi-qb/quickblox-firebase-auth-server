@@ -17,20 +17,6 @@ const httpsAgent = new https.Agent({
   rejectUnauthorized: false,
 })
 
-const generateAuthMsg = (access_token) => {
-  return {
-    application_id: process.env.QUICKBLOX_APP_ID,
-    auth_key: process.env.QUICKBLOX_AUTH_KEY,
-    nonce: Math.floor(Math.random() * 10000),
-    timestamp: Math.floor(Date.now() / 1000),
-    provider: 'firebase_phone',
-    firebase_phone: {
-      access_token,
-      project_id: process.env.FIREBASE_PROJECT_ID,
-    },
-  }
-}
-
 const signMessage = (message) => {
   const sessionMsg = Object.keys(message)
     .map((val) => {
@@ -57,11 +43,139 @@ const signMessage = (message) => {
   return signedMessage
 }
 
-app.post('/session', async (req, res) => {
+const generateAuthMsgWithFirebase = (access_token) => {
+  return {
+    application_id: process.env.QUICKBLOX_APP_ID,
+    auth_key: process.env.QUICKBLOX_AUTH_KEY,
+    nonce: Math.floor(Math.random() * 10000),
+    timestamp: Math.floor(Date.now() / 1000),
+    provider: 'firebase_phone',
+    firebase_phone: {
+      access_token,
+      project_id: process.env.FIREBASE_PROJECT_ID,
+    },
+  }
+}
+
+app.post('/session/phone', async (req, res) => {
   try {
     const { access_token } = req.body
 
-    const message = generateAuthMsg(access_token)
+    const message = generateAuthMsgWithFirebase(access_token)
+    const signedMessage = signMessage(message)
+
+    const {
+      data: { session },
+    } = await axios.post(
+      'session.json',
+      {
+        signature: signedMessage,
+        ...message,
+      },
+      {
+        baseURL: process.env.QUICKBLOX_API_URL,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        httpsAgent,
+      },
+    )
+
+    res.status(201).send({
+      session,
+    })
+  } catch (error) {
+    let status = 500
+    let errorData = {
+      error: {
+        message: error.message,
+      },
+    }
+
+    if ('response' in error) {
+      status = error.response.status
+      errorData = error.response.data
+    }
+
+    res.status(status).send(errorData)
+  }
+})
+
+const generateAuthMsgWithEmail = (email, password) => {
+  return {
+    application_id: process.env.QUICKBLOX_APP_ID,
+    auth_key: process.env.QUICKBLOX_AUTH_KEY,
+    nonce: Math.floor(Math.random() * 10000),
+    timestamp: Math.floor(Date.now() / 1000),
+    user: {
+      email,
+      password,
+    },
+  }
+}
+
+app.post('/session/email', async (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    const message = generateAuthMsgWithEmail(email, password)
+    const signedMessage = signMessage(message)
+
+    const {
+      data: { session },
+    } = await axios.post(
+      'session.json',
+      {
+        signature: signedMessage,
+        ...message,
+      },
+      {
+        baseURL: process.env.QUICKBLOX_API_URL,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        httpsAgent,
+      },
+    )
+
+    res.status(201).send({
+      session,
+    })
+  } catch (error) {
+    let status = 500
+    let errorData = {
+      error: {
+        message: error.message,
+      },
+    }
+
+    if ('response' in error) {
+      status = error.response.status
+      errorData = error.response.data
+    }
+
+    res.status(status).send(errorData)
+  }
+})
+
+const generateAuthMsgWithLogin = (login, password) => {
+  return {
+    application_id: process.env.QUICKBLOX_APP_ID,
+    auth_key: process.env.QUICKBLOX_AUTH_KEY,
+    nonce: Math.floor(Math.random() * 10000),
+    timestamp: Math.floor(Date.now() / 1000),
+    user: {
+      login,
+      password,
+    },
+  }
+}
+
+app.post('/session/login', async (req, res) => {
+  try {
+    const { login, password } = req.body
+
+    const message = generateAuthMsgWithLogin(login, password)
     const signedMessage = signMessage(message)
 
     const {

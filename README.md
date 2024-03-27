@@ -35,14 +35,44 @@ The server will be started on the specified port (or default port 3000 if not pr
 
 ### Create QuickBlox session
 
-To create a QuickBlox user session, submit a `POST` request to the `/session` endpoint with the `access_token` received from Firebase.
+#### Create QuickBlox session with phone
+
+To create a QuickBlox user session, submit a `POST` request to the `/session/phone` endpoint with the `access_token` received from Firebase.
 
 ```bash
 curl --request POST \
-  --url http://localhost:3000/session \
+  --url http://localhost:3000/session/phone \
   --header 'Content-Type: application/json' \
   --data '{
 	"access_token": "<FIREBASE_TOKEN_ID>"
+}'
+```
+
+#### Create QuickBlox session with email
+
+To create a QuickBlox user session, submit a `POST` request to the `/session/email` endpoint with user email and password.
+
+```bash
+curl --request POST \
+  --url http://localhost:3000/session/email \
+  --header 'Content-Type: application/json' \
+  --data '{
+	"email": "<USER_EMAIL>",
+	"password": "<USER_PASSWORD>"
+}'
+```
+
+#### Create QuickBlox session with login
+
+To create a QuickBlox user session, submit a `POST` request to the `/session/login` endpoint with user login and password.
+
+```bash
+curl --request POST \
+  --url http://localhost:3000/session/email \
+  --header 'Content-Type: application/json' \
+  --data '{
+	"login": "<USER_EMAIL>",
+	"password": "<USER_PASSWORD>"
 }'
 ```
 
